@@ -1,0 +1,78 @@
+local player = game:GetService("Players").LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local workspace = game:GetService("Workspace")
+local randomizeEvent = ReplicatedStorage:WaitForChild("RandomizePetNames")
+
+-- UI setup
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+screenGui.Name = "ESPUI"
+screenGui.ResetOnSpawn = false
+
+--  Draggable Frame
+local panel = Instance.new("Frame")
+panel.Size = UDim2.new(0, 200, 0, 120)
+panel.Position = UDim2.new(0, 20, 0, 20)
+panel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+panel.BackgroundTransparency = 0.2
+panel.BorderSizePixel = 0
+panel.Active = true
+panel.Draggable = true --  make it draggable
+panel.Parent = screenGui
+
+--  ESP Toggle Button
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(1, -20, 0, 40)
+toggleButton.Position = UDim2.new(0, 10, 0, 10)
+toggleButton.Text = "Enable ESP"
+toggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 255)
+toggleButton.TextColor3 = Color3.new(1, 1, 1)
+toggleButton.TextScaled = true
+toggleButton.Font = Enum.Font.GothamBold
+toggleButton.Parent = panel
+
+--  Randomize Button
+local randomButton = Instance.new("TextButton")
+randomButton.Size = UDim2.new(1, -20, 0, 40)
+randomButton.Position = UDim2.new(0, 10, 0, 60)
+randomButton.Text = "Randomize"
+randomButton.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
+randomButton.TextColor3 = Color3.new(1, 1, 1)
+randomButton.TextScaled = true
+randomButton.Font = Enum.Font.GothamBold
+randomButton.Parent = panel
+
+--  Credit Label
+local creditLabel = Instance.new("TextLabel")
+creditLabel.Size = UDim2.new(0, 200, 0, 30)
+creditLabel.Position = UDim2.new(1, -210, 1, -40)
+creditLabel.AnchorPoint = Vector2.new(0, 0)
+creditLabel.BackgroundTransparency = 1
+creditLabel.Text = "Made by Eulo"
+creditLabel.TextColor3 = Color3.new(1, 1, 1)
+creditLabel.TextScaled = true
+creditLabel.Font = Enum.Font.GothamSemibold
+creditLabel.TextStrokeTransparency = 0.5
+creditLabel.Parent = screenGui
+
+-- Logic: Toggle ESP
+local espEnabled = false
+local function toggleESP()
+    espEnabled = not espEnabled
+    toggleButton.Text = espEnabled and "Disable ESP" or "Enable ESP"
+
+    for , zenEgg in pairs(workspace:GetChildren()) do
+        if zenEgg:IsA("Model") and zenEgg:FindFirstChild("Egg") then
+            local gui = zenEgg.Egg:FindFirstChild("PetTypeGui")
+            if gui then
+                gui.Enabled = espEnabled
+            end
+        end
+    end
+end
+
+toggleButton.MouseButton1Click:Connect(toggleESP)
+
+-- Logic: Randomize pet names
+randomButton.MouseButton1Click:Connect(function()
+    randomizeEvent:FireServer()
+end)
