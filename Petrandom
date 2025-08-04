@@ -1,14 +1,15 @@
-local player = game:GetService("Players").LocalPlayer
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local workspace = game:GetService("Workspace")
-local randomizeEvent = ReplicatedStorage:WaitForChild("RandomizePetNames")
+local UIS = game:GetService("UserInputService")
 
--- UI setup
-local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-screenGui.Name = "ESPUI"
-screenGui.ResetOnSpawn = false
+local player = Players.LocalPlayer
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "MobileESPUI"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
 
---  Draggable Frame
+--  Panel Frame
 local panel = Instance.new("Frame")
 panel.Size = UDim2.new(0, 200, 0, 120)
 panel.Position = UDim2.new(0, 20, 0, 20)
@@ -16,8 +17,8 @@ panel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 panel.BackgroundTransparency = 0.2
 panel.BorderSizePixel = 0
 panel.Active = true
-panel.Draggable = true --  make it draggable
-panel.Parent = screenGui
+panel.Draggable = false -- replaced with custom drag
+panel.Parent = gui
 
 --  ESP Toggle Button
 local toggleButton = Instance.new("TextButton")
@@ -42,27 +43,25 @@ randomButton.Font = Enum.Font.GothamBold
 randomButton.Parent = panel
 
 --  Credit Label
-local creditLabel = Instance.new("TextLabel")
-creditLabel.Size = UDim2.new(0, 200, 0, 30)
-creditLabel.Position = UDim2.new(1, -210, 1, -40)
-creditLabel.AnchorPoint = Vector2.new(0, 0)
-creditLabel.BackgroundTransparency = 1
-creditLabel.Text = "Made by Eulo"
-creditLabel.TextColor3 = Color3.new(1, 1, 1)
-creditLabel.TextScaled = true
-creditLabel.Font = Enum.Font.GothamSemibold
-creditLabel.TextStrokeTransparency = 0.5
-creditLabel.Parent = screenGui
+local credit = Instance.new("TextLabel", gui)
+credit.Text = "Made by Eulo"
+credit.Size = UDim2.new(0, 200, 0, 30)
+credit.Position = UDim2.new(1, -210, 1, -40)
+credit.BackgroundTransparency = 1
+credit.TextColor3 = Color3.new(1, 1, 1)
+credit.TextScaled = true
+credit.Font = Enum.Font.GothamSemibold
+credit.TextStrokeTransparency = 0.5
 
--- Logic: Toggle ESP
+--  ESP Toggle Logic
 local espEnabled = false
 local function toggleESP()
     espEnabled = not espEnabled
     toggleButton.Text = espEnabled and "Disable ESP" or "Enable ESP"
 
-    for , zenEgg in pairs(workspace:GetChildren()) do
-        if zenEgg:IsA("Model") and zenEgg:FindFirstChild("Egg") then
-            local gui = zenEgg.Egg:FindFirstChild("PetTypeGui")
+    for , egg in pairs(Workspace:GetChildren()) do
+        if egg:IsA("Model") and egg:FindFirstChild("Egg") then
+            local gui = egg.Egg:FindFirstChild("PetTypeGui")
             if gui then
                 gui.Enabled = espEnabled
             end
@@ -72,7 +71,42 @@ end
 
 toggleButton.MouseButton1Click:Connect(toggleESP)
 
--- Logic: Randomize pet names
+--  Randomizer Logic
 randomButton.MouseButton1Click:Connect(function()
-    randomizeEvent:FireServer()
+    local remote = ReplicatedStorage:FindFirstChild("RandomizePetNames")
+    if remote then
+        remote:FireServer()
+    end
+end)
+
+--  Custom Mobile Drag for Panel
+local dragging = false
+local dragInput, startPos, inputStart
+
+panel.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        inputStart = input.Position
+        startPos = panel.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+panel.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - inputStart
+        panel.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
 end)
